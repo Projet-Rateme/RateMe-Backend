@@ -1,0 +1,65 @@
+'use strict';
+
+const express = require('express');
+const router = express.Router();
+const User = require('../controllers/userController.js');
+const Post = require('../controllers/postsController.js');
+const Comment = require('../controllers/commentsController.js');
+
+// User routes
+
+router.post('/register', User.register);
+router.post('/login', User.login);
+router.get('/profile', User.profile);
+router.put('/editUser', User.loginRequired, User.editUser);
+router.delete('/deleteUser', User.loginRequired, User.deleteUser);
+router.get('/verify/:tokens', User.verify);
+router.post('/forgotpassword', User.forgotPassword);
+router.put('/resetpassword/:resetToken', User.resetPassword);
+router.post('/upload', User.uploadImage);
+router.get('/logout', User.logout);
+
+router.get('/current', User.currentUser);
+router.get('/getUsers', User.getUsers);
+router.get('/user/:userId', User.loginRequired, User.getUserById);
+
+
+router.get('/:userId/posts', User.postsByUser);
+router.post('/:postId/like', User.likePost);
+
+router.post('/:ratedUserId/rate', User.loginRequired, User.rateUser);
+router.post('/:userId/follow', User.loginRequired, User.followUser);
+router.get('/:userId/rating', User.getAverageRating);
+
+router.post('/createStory', User.loginRequired, User.createStory);
+router.get('/getStories', User.getStories);
+router.get('/getStory/:content', User.getStory);
+
+
+router.get('/uploads/:filename', Post.showImage);
+
+// post routes
+
+router.post('/post/create', User.loginRequired, Post.createPost);
+
+router.get('/post/:postId/likes', Post.getPostLikes);
+
+router.post('/post/delete/:postId', User.loginRequired, Post.deletePost);
+
+router.post('/post/:commentId/like', User.loginRequired, Comment.likeComment);
+
+router.get('/posts', Post.getPosts);
+
+router.post('/post/:postId/comment', User.loginRequired, Comment.createComment);
+
+router.post('/post/:postId/comment/delete/:commentId', User.loginRequired, Comment.deleteComment);
+
+router.post('/post/comment/:commentId/reply', User.loginRequired, Comment.replyComment);
+
+router.get('/post/:postId', Post.getPostById);
+
+router.get('/post/:postId/comments', User.loginRequired, Comment.getComments);
+
+module.exports = router;
+
+
