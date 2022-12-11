@@ -50,6 +50,8 @@ router.post('/post/:commentId/like', User.loginRequired, Comment.likeComment);
 
 router.get('/posts', Post.getPosts);
 
+router.get('/currentuserposts', Post.getCurrentUserPosts);
+
 router.post('/post/:postId/comment', User.loginRequired, Comment.createComment);
 
 router.post('/post/:postId/comment/delete/:commentId', User.loginRequired, Comment.deleteComment);

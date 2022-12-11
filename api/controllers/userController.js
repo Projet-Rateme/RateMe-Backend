@@ -68,13 +68,17 @@ module.exports = {
     const { name, email, password, confirmPassword } = req.body;
     const user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({
-        message: 'User already exists',
+      return res.send({
+        error: true,
+        message: 'User Already Exists',
+        data: []
       });
     }
     if (password !== confirmPassword) {
-      return res.status(400).json({
-        message: 'Passwords do not match',
+      return res.send({
+        error: true,
+        message: 'Password do not match',
+        data: []
       });
     }
 
@@ -158,18 +162,32 @@ module.exports = {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user.isVerified) {
-      return res.status(400).json({
-        message: 'Please verify your account',
-      });
-    }
-
     if (!user) {
-      return res.status(400).json({ error: 'User not found' });
+      return res.send({
+        error: true,
+        message : 'This email doesnt exist',
+        token: '',
+        data: null
+      })
     }
 
     if (!await bcrypt.compare(password, user.password)) {
-      return res.status(400).json({ error: 'Invalid password' });
+      return res.send ({
+        error: true,
+        message: 'Incorrect password',
+        token: '',
+        data: null
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.send({
+        error: true,
+        message: 'Please verify your account',
+        token: '',
+        // return empty user data not in array
+        data: null
+      });
     }
 
     const token = jwt.sign({ id: user.id }, 'secret', {
@@ -295,8 +313,12 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    res.clearCookie('token');
-    return res.json({ message: 'Logout successfully!' });
+    return res.send ({
+      error: true,
+      message: 'User successfully logged out',
+      token: '',
+      data: null
+    });
   },
 
   getUsers: async (req, res) => {

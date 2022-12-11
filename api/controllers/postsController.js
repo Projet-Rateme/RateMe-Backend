@@ -90,6 +90,16 @@ module.exports = {
           });
     },
 
+    getCurrentUserPosts: async(req, res) => {
+        const posts = await Post.find({user: req.user.id}).populate('user').populate('likes').sort({ createdAt: -1});
+
+        return res.send({
+            error: false,
+            message: 'Current user posts',
+            data: posts
+        })
+    },
+
     getAllPosts: async (req, res) => {
         const posts = await Post.find().populate('user').sort({createdAt: -1});
         return res.send({
