@@ -19,6 +19,11 @@ const PostSchema = new mongoose.Schema ({
         type: Boolean,
         default: false
     },
+    comments: [
+        {
+            type: mongoose.Schema.Types.ObjectId,ref:'Comment',
+        }
+    ],
     image: {
         type: String,
     },
@@ -26,11 +31,6 @@ const PostSchema = new mongoose.Schema ({
         type: String,
         required: 'Kindly enter the content of the post'
     },
-    comments: [
-        {
-            type: mongoose.Schema.Types.ObjectId,ref:'Comment',
-        }
-    ],
 }, {
     timestamps: true
 });

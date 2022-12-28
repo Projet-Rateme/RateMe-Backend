@@ -16,6 +16,8 @@ router.delete('/deleteUser', User.loginRequired, User.deleteUser);
 router.get('/verify/:tokens', User.verify);
 router.post('/forgotpassword', User.forgotPassword);
 router.put('/resetpassword/:resetToken', User.resetPassword);
+// post verify code with resettoken
+router.post('/verifycode/:resetToken', User.verifyCode);
 router.post('/upload', User.uploadImage);
 router.get('/logout', User.logout);
 
@@ -48,11 +50,11 @@ router.post('/post/delete/:postId', User.loginRequired, Post.deletePost);
 
 router.post('/post/:commentId/like', User.loginRequired, Comment.likeComment);
 
-router.get('/posts', Post.getPosts);
+router.get('/posts', User.loginRequired, Post.getPosts);
 
 router.get('/currentuserposts', Post.getCurrentUserPosts);
 
-router.post('/post/:postId/comment', User.loginRequired, Comment.createComment);
+router.post('/:postId/comment', User.loginRequired, Comment.createComment);
 
 router.post('/post/:postId/comment/delete/:commentId', User.loginRequired, Comment.deleteComment);
 
@@ -60,7 +62,10 @@ router.post('/post/comment/:commentId/reply', User.loginRequired, Comment.replyC
 
 router.get('/post/:postId', Post.getPostById);
 
-router.get('/post/:postId/comments', User.loginRequired, Comment.getComments);
+router.get('/:postId/comments', User.loginRequired, Post.getPostComments);
+
+// delete all user posts
+router.post('/post/deleteAllUserPosts/:userId', User.loginRequired, Post.deleteAllUserPosts);
 
 module.exports = router;
 

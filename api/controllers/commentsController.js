@@ -5,23 +5,31 @@ const Post = require('../models/post.js');
 const User = require('../models/user.js');
 
 module.exports = {
+    //create comment with content and postId as params and populate user and post
     createComment : async (req, res) => {
         const { content } = req.body;
         const { postId } = req.params;
         const user = await User.findById(req.user.id);
-        const post = await Post.findById(postId);
+        const post = await Post.findById(postId).populate('user').populate('likes').populate({
+            path: 'comments',
+            populate: {
+                path: 'user',
+                model: 'User',
+                },
+                }).sort({ createdAt: -1 });
         const comment = await Comment.create({
             content,
-            user: user._id,
-            post: post._id
+            user: user,
         });
 
-        post.comments.push(comment._id);
-        await user.save();
+        post.comments.push(comment);
         await post.save();
 
-        return res.status(201).json({
-            comment
+        return res.send({
+            error: false,
+            message: 'Comment created',
+            data: [comment],
+            post: post,
         });
     },
 
@@ -31,12 +39,6 @@ module.exports = {
 
         await comment.remove();
         return res.send(comment);
-    },
-
-    getComments : async (req, res) => {
-        const { postId } = req.params;
-        const post = await Post.findById(postId).populate('comments');
-        return res.json(post.comments);
     },
 
     likeComment : async (req, res) => {

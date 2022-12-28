@@ -32,11 +32,6 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  posts : [
-    {
-    type: mongoose.Schema.Types.ObjectId,ref:'Post'
-    }
-  ],
   ratings: [
     { user : mongoose.Schema.Types.ObjectId, stars : Number }
   ],

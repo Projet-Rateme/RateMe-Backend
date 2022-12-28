@@ -71,14 +71,16 @@ module.exports = {
       return res.send({
         error: true,
         message: 'User Already Exists',
-        data: []
+        data: [],
+        token: ''
       });
     }
     if (password !== confirmPassword) {
       return res.send({
         error: true,
         message: 'Password do not match',
-        data: []
+        data: [], 
+        token: ''
       });
     }
 
@@ -88,9 +90,12 @@ module.exports = {
     };
 
     if (!validEmail(email)) {
-      return res.status(400).json({
-        message: 'Invalid email',
-      });
+     return res.send({
+      error: false,
+      message: "invalid email",
+      data: [],
+      token: ''
+     })
     }
 
     // hash password and create user
@@ -104,6 +109,7 @@ module.exports = {
     const token = crypto.randomBytes(16).toString('hex');
     const newToken = await Token.create({
       userId: newUser._id,
+      code: "none",
       token,
     });
 
@@ -118,14 +124,18 @@ module.exports = {
     };
     transporter.sendMail(mailOptions, (err, data) => {
       if (err) {
-        return res.status(400).json({
+        return res.send({
+          error: true,
           message: 'Error sending email',
+          data: [],
+          token: ''
         });
       }
       return res.send({
         error: false,
         message: 'User successfully added',
-        data: []
+        data: [],
+        token: ''
       });
     });
   },
@@ -227,21 +237,23 @@ module.exports = {
         message: 'User not found',
       });
     }
+    const code = Math.floor(100000 + Math.random() * 900000);
     const token = crypto.randomBytes(16).toString('hex');
     const newToken = await Token.create({
       userId: user._id,
+      code: code,
       token,
     });
+
 
     const mailOptions = {
       from: '"Rate me" <ratemeenoreply@gmail.com>',
       to: email,
       subject: 'Reset your password',
       html: `<p>Hi ${user.name},</p>
-      <p>Someone has requested to reset your password.</p>
-      <p>If it was not you, please ignore this email.</p>
-      <p>If it was you, please click the link below to reset your password:</p>
-      http://localhost:3000/resetpassword/${token}`,
+      <p>Here is your password reset code:</p>
+      <h1>${code}</h1>
+      <p>Enter this code in the app to reset your password.</p>`
     };
     transporter.sendMail(mailOptions, (err, data) => {
       if (err) {
@@ -249,40 +261,94 @@ module.exports = {
           message: 'Error sending email',
         });
       }
-      return res.status(200).json({
+      return res.send({
+        error: false,
         message: 'Email sent',
+        token: token,
+        data: [user]
+      })
+    });
+  },
+
+  verifyCode: async (req, res) => {
+    const { resetToken } = req.params;
+    const { code } = req.body;
+
+    const token = await Token.findOne({ token: resetToken });
+    // get user
+    const user = await User.findById(token.userId);
+    if (!token) {
+      return res.send({
+        error: true,
+        message: 'Token is invalid',
+        data: [user],
+        token: resetToken
       });
+    }
+
+    if (token.code != code) {
+      return res.send({
+        error: true,
+        message: 'Code is invalid',
+        data: [user],
+        token: resetToken
+      });
+    }
+
+    return res.send({
+      error: false,
+      message: 'Code is valid',
+      data: [user],
+      token: resetToken
     });
   },
 
   resetPassword: async (req, res) => {
     const { resetToken } = req.params;
     const { password, confirmPassword } = req.body;
-    const token = await Token.findOne({
-      token: resetToken,
-    });
-    if (!token) {
-      return res.status(400).json({
-        message: 'Token is invalid',
-      });
-    }
+
+
+    const token = await Token.findOne({ token: resetToken });
+    // get user
     const user = await User.findById(token.userId);
-    if (!user) {
-      return res.status(400).json({
-        message: 'User not found',
+
+    if (!token) {
+      return res.send({
+        error: true,
+        message: 'Token is invalid',
+        data: [],
+        token: resetToken
       });
     }
-    if (password !== confirmPassword) {
-      return res.status(400).json({
+
+    if (password != confirmPassword) {
+      return res.send({
+        error: true,
         message: 'Passwords do not match',
+        data: [],
+        token: resetToken
       });
     }
-    const hash = await bcrypt.hash(password, 10);
-    user.password = hash;
+
+    if (!user) {
+      return res.send({
+        error: true,
+        message: 'User not found',
+        data: [],
+        token: resetToken
+      });
+    }
+
+    user.password = bcrypt.hashSync(password, 10);
     await user.save();
-    return res.status(200).json({
-      message: 'Password changed',
+    await token.remove();
+    return res.send({
+      error: false,
+      message: 'Password successfully changed',
+      token : '',
+      data: []
     });
+
   },
 
   editUser: async (req, res) => {
@@ -327,6 +393,7 @@ module.exports = {
       error: false,
       message: 'Users',
       data: users,
+      token: ''
     });
   },
 
@@ -364,7 +431,7 @@ module.exports = {
   likePost: async (req, res) => {
 
     const { postId } = req.params;
-    const post = await Post.findById(postId).populate('likes').populate('user');
+    const post = await Post.findById(postId).populate('likes');
     const user = await User.findById(req.user.id);
 
     // if post likes contains current user
@@ -376,7 +443,8 @@ module.exports = {
       return res.send({
         error: false,
         message: 'Post unliked',
-        data: [post],
+        data: post.likes,
+        token: ''
       });
     } else {
       // add like
@@ -386,7 +454,8 @@ module.exports = {
       return res.send({
         error: false,
         message: 'Post liked',
-        data: [post],
+        data: post.likes,
+        token: ''
       });
     }
 
