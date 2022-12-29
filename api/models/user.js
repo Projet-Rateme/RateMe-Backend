@@ -4,46 +4,74 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    trim: true,
-    required: false
-  },
   email: {
     type: String,
+    required: true,
     unique: true,
-    lowercase: true,
-    trim: true,
-    required: true
+    trim: true
+  },
+  firstname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  lastname: {
+    type: String,
+    required: true,
+    trim: true
   },
   password: {
-    type: String
+    type: String,
+    required: true
   },
-  image: {
-    type: String
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post'
+  }],
+  profilePicture: {
+    type: String,
+    default: 'https://res.cloudinary.com/dzqjxjx8p/image/upload/v1523625008/blank-profile-picture-973460_960_720.png'
   },
-  followers : {
-    type: Array
+  coverPicture: {
+    type: String,
+    default: 'https://res.cloudinary.com/dzqjxjx8p/image/upload/v1523625008/blank-profile-picture-973460_960_720.png'
   },
-  following : {
-    type: Array
+  bio: {
+    type: String,
+    default: 'No bio yet'
   },
-  isVerified : {
+  location: {
+    type: String,
+    default: 'No location yet'
+  },
+  website: {
+    type: String,
+    default: 'No website yet'
+  },
+  birthday: {
+    type: Date,
+    default: Date.now
+  },
+  isVerified: {
     type: Boolean,
     default: false
   },
-  ratings: [
-    { user : mongoose.Schema.Types.ObjectId, stars : Number }
-  ],
-  stories: [
-    {
-    type: mongoose.Schema.Types.ObjectId,ref:'Story'
-    }
-  ],
-
+  token : {
+    type: String,
+    default: null
+  },
 }, {
   timestamps: true
 });
+
 
 UserSchema.methods.comparePassword = function(password) {
   return bcrypt.compareSync(password, this.hash_password);

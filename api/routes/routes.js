@@ -2,15 +2,14 @@
 
 const express = require('express');
 const router = express.Router();
-const User = require('../controllers/userController.js');
-const Post = require('../controllers/postsController.js');
-const Comment = require('../controllers/commentsController.js');
+const Auth = require('../controllers/AuthController.js');
 
 // User routes
 
-router.post('/register', User.register);
-router.post('/login', User.login);
-router.get('/profile', User.profile);
+router.post('/register', Auth.register);
+router.post('/login', Auth.login);
+router.get('/logout', Auth.logout);
+/*router.get('/profile', User.profile);
 router.put('/editUser', User.loginRequired, User.editUser);
 router.delete('/deleteUser', User.loginRequired, User.deleteUser);
 router.get('/verify/:tokens', User.verify);
@@ -19,7 +18,7 @@ router.put('/resetpassword/:resetToken', User.resetPassword);
 // post verify code with resettoken
 router.post('/verifycode/:resetToken', User.verifyCode);
 router.post('/upload', User.uploadImage);
-router.get('/logout', User.logout);
+
 
 router.get('/current', User.currentUser);
 router.get('/getUsers', User.getUsers);
@@ -66,6 +65,7 @@ router.get('/:postId/comments', User.loginRequired, Post.getPostComments);
 
 // delete all user posts
 router.post('/post/deleteAllUserPosts/:userId', User.loginRequired, Post.deleteAllUserPosts);
+*/
 
 module.exports = router;
 
