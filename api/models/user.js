@@ -64,9 +64,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  token : {
-    type: String,
-    default: null
+  // token of type Token
+  token: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Token'
   },
 }, {
   timestamps: true

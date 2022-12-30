@@ -3,8 +3,8 @@
 const mongoose = require('mongoose');
 
 const tokenSchema = new mongoose.Schema({
-    userId : {
-        type: mongoose.Schema.Types.ObjectId,ref:'User',
+    email : {
+        type: String,
         required: true
     },
     code : {
