@@ -3,7 +3,7 @@
 var express = require('express'),
 app = express(),
 port = process.env.PORT || 3000,
-  
+session = require('express-session'),
 bodyParser = require('body-parser'),
 jsonwebtoken = require("jsonwebtoken");
 const cloudinary = require('cloudinary').v2;
@@ -20,6 +20,12 @@ const option = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 };
+
+app.use(session({
+    secret: 'secret', // used to sign the session ID cookie
+    resave: false, // don't save session if unmodified
+    saveUninitialized: false, // don't create session until something stored
+  }));
 
 
 mongoose.connect('mongodb+srv://Chawki32g:WP8uec9S5bPLjaP@c1.2qrjkua.mongodb.net/?retryWrites=true&w=majority', option).then(function(){

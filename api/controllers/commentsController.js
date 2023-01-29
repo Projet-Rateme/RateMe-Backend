@@ -2,83 +2,45 @@
 
 const Comment = require('../models/comment.js');
 const Post = require('../models/post.js');
-const User = require('../models/user.js');
+const User = require('../models/User');
 
 module.exports = {
-    //create comment with content and postId as params and populate user and post
-    createComment : async (req, res) => {
-        const { content } = req.body;
+    createComment: async (req, res) => {
         const { postId } = req.params;
+        const { content } = req.body;
+        const post = await Post.findById(postId);
         const user = await User.findById(req.user.id);
-        const post = await Post.findById(postId).populate('user').populate('likes').populate({
-            path: 'comments',
-            populate: {
-                path: 'user',
-                model: 'User',
-                },
-                }).sort({ createdAt: -1 });
         const comment = await Comment.create({
             content,
-            user: user,
+            user,
         });
-
         post.comments.push(comment);
         await post.save();
-
-        return res.send({
-            error: false,
+        return res.status(200).json({
+            statusCode: 200,
             message: 'Comment created',
-            data: [comment],
-            post: post,
+            comment: comment,
         });
     },
 
-    deleteComment : async (req, res) => {
-        const { commentId } = req.params;
-        const comment = await Comment.findById(commentId);
-
-        await comment.remove();
-        return res.send(comment);
-    },
-
-    likeComment : async (req, res) => {
-        const { commentId } = req.params;
-        const comment = await Comment.findById(commentId);
-        const user = await User.findById(req.user.id);
-
-        if (comment.likes.includes(user._id)) {
-            comment.likes = comment.likes.pull(user._id);
+    // delete post comments
+    deletePostComments: async (req, res) => {
+        const { postId } = req.params;
+        const post = await Post.findById(postId);
+        const comments = await Comment.find({ _id: { $in: post.comments } });
+        comments.forEach(async (comment) => {
+            await comment.remove();
         }
-        else {
-            comment.likes.push(user._id);
-        }
-
-        await comment.save();
-
-        return res.status(201).json({
-            comment
+        );
+        // pull comments from post
+        post.comments.pull({ _id: { $in: post.comments } });
+        await post.save();
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Post comments deleted',
         });
     },
 
-    replyComment : async (req, res) => {
-        const { content } = req.body;
-        const { commentId } = req.params;
-        const user = await User.findById(req.user.id);
-        const comment = await Comment.findById(commentId);
-        const reply = await Comment.create({
-            content,
-            user: user._id,
-            post: comment.post,
-            parent: comment._id
-        });
-
-        comment.replies.push(reply._id);
-        await user.save();
-        await comment.save();
-
-        return res.status(201).json({
-            reply
-        });
-    },
+    
     
 }

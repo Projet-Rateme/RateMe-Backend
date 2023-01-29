@@ -3,6 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const Auth = require('../controllers/AuthController.js');
+const Post = require('../controllers/postsController.js');
+const Comment = require('../controllers/commentsController.js');
 
 // User routes
 
@@ -14,6 +16,19 @@ router.post('/verifyEmail/:verificationToken', Auth.verifyEmail);
 router.post('/forgotpassword', Auth.forgotPassword);
 router.post('/verifyResetPasswordCode/:resetToken', Auth.verifyResetPasswordCode);
 router.put('/resetPassword/:resetToken', Auth.resetPassword);
+router.get('/current', Auth.getCurrentUser);
+router.get('/getUsers', Auth.getAllUsers);
+// fetch user posts
+router.get('/user/:userId/posts', Post.fetchUserPosts);
+
+router.get('/posts',Auth.getCurrentUser, Post.fetchPosts);
+router.post('/post/create', Auth.getCurrentUser, Post.createPost);
+router.get('/myprofileposts',Auth.getCurrentUser, Post.fetchCurrentUserPosts);
+router.post('/post/:postId/like', Auth.getCurrentUser, Post.likePost);
+router.post('/post/:postId/comment', Auth.getCurrentUser, Comment.createComment);
+router.get('/post/:postId/comments', Auth.getCurrentUser, Post.fetchPostComments);
+router.get('/post/:postId/likes', Auth.getCurrentUser, Post.fetchPostLikes);
+router.delete('/post/:postId/deletecomments', Auth.getCurrentUser, Comment.deletePostComments);
 /*router.get('/profile', User.profile);
 router.put('/editUser', User.loginRequired, User.editUser);
 router.delete('/deleteUser', User.loginRequired, User.deleteUser);

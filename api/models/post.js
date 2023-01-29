@@ -3,10 +3,6 @@
 const mongoose = require ('mongoose');
 
 const PostSchema = new mongoose.Schema ({
-    title: {
-        type: String,
-        required: 'Kindly enter the title of the post'
-    },
     user: {
         type: mongoose.Schema.Types.ObjectId,ref:'User',
     },
@@ -15,10 +11,6 @@ const PostSchema = new mongoose.Schema ({
             type: mongoose.Schema.Types.ObjectId,ref:'User',
         }
     ],
-    liked: {
-        type: Boolean,
-        default: false
-    },
     comments: [
         {
             type: mongoose.Schema.Types.ObjectId,ref:'Comment',

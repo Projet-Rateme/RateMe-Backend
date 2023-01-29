@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+
   
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -25,7 +26,6 @@ module.exports = {
             });
         }
         
-        // crypt password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const newUser = await User.create({
@@ -44,7 +44,6 @@ module.exports = {
 
     sendEmail : async (req, res) => {
         const { email } = req.body;
-        // if email already exists 
         const user = await User.findOne ({ email });
         const validEmail = (email) => {
             const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -83,7 +82,6 @@ module.exports = {
         });
     },
 
-    // just verify if the code is correct before creating the user
     verifyEmail : async (req, res) => {
         const { code } = req.body;
         const { verificationToken } = req.params;
@@ -100,6 +98,27 @@ module.exports = {
         });
     },
 
+    // get current user
+    getCurrentUser: async (req, res, next) => {
+
+        const { authorization } = req.headers;
+        if (!authorization) {
+            return res.status(401).send({ statusCode : 401, message: 'Unauthorized' });
+        }
+        const token = await Token.findOne({ token: authorization });
+        if (!token) {
+            return res.status(401).send({ statusCode : 401, message: 'Unauthorized' });
+        }
+
+        const user = await User.findOne ({ email: token.email });
+        if (!user) {
+            return res.status(401).send({ statusCode : 401, message: 'Unauthorized' });
+        } else {
+            req.user = user;
+            next();
+        }
+        
+    },
 
     login: async (req, res) => {
         const { email, password } = req.body;
@@ -112,7 +131,7 @@ module.exports = {
             });
         }
         if (!await bcrypt.compare(password, user.password)) {
-            return res.send ({
+            return res.status(400).send ({
                 statusCode : 400, message: 'Password is incorrect'
             });
           }
@@ -120,19 +139,21 @@ module.exports = {
         if (!user.isVerified) {
             return res.status(401).send({ statusCode : 401,  message: 'User is not verified' });
         }
-        
-        const token = jwt.sign({ id: user._id }, 'secret', {
-            expiresIn: 86400,
+
+        const token = await Token.create({
+            email,
+            token: jwt.sign({ email }, 'secret'),
         });
+      
+        // set authorization header token
+        //res.set('Authorization', token.token);
 
-        // save token to cookie
-
-        return res.cookie('token', token, { httpOnly: true }).status(200).send({
+        return res.status(200).send({
             statusCode : 200,
             message : "Successfully logged in",
-            token : token,
+            token: token.token,
             user : user,
-        });
+        }); 
     },
 
     forgotPassword: async (req, res) => {
@@ -200,14 +221,32 @@ module.exports = {
             message : "Password changed",
         });
     },
-
-
     
-    // logout and clear cookie
     logout: async (req, res) => {
-        res.clearCookie('token').send({
+        // delete token from db
+        const { authorization } = req.headers;
+        if (!authorization) {
+            return res.status(401).send({ statusCode : 401, message: 'Unauthorized' });
+        }
+        const token = await Token.findOne({ token: authorization });
+        if (!token) {
+            return res.status(401).send({ statusCode : 401, message: 'Unauthorized' });
+        }
+        await token.remove();
+        return res.status(200).send({
             statusCode : 200,
             message : "Successfully logged out",
+            user: undefined,
+        });
+    },
+
+    // get all users
+    getAllUsers: async (req, res) => {
+        const users = await User.find();
+        return res.status(200).send({
+            statusCode : 200,
+            message : "All users",
+            users : users,
         });
     }
 }

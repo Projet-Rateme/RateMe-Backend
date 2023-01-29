@@ -32,10 +32,6 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  posts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post'
-  }],
   profilePicture: {
     type: String,
     default: 'https://res.cloudinary.com/dzqjxjx8p/image/upload/v1523625008/blank-profile-picture-973460_960_720.png'
@@ -63,11 +59,6 @@ const UserSchema = new mongoose.Schema({
   isVerified: {
     type: Boolean,
     default: false
-  },
-  // token of type Token
-  token: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Token'
   },
 }, {
   timestamps: true

@@ -1,13 +1,13 @@
 'use strict';
+const User = require('../models/User');
 const Post = require('../models/post.js');
-const User = require('../models/user.js');
 const Comment = require('../models/comment.js');
+const authController = require('./authController');
 
 const multer = require("multer");
 const SharpMulter = require("sharp-multer");
 const path = require("path");
 
-// cloudinary from serverjs
 const cloudinary = require('cloudinary').v2;
 
 const storage = SharpMulter({
@@ -30,35 +30,115 @@ const handleMultipartData = multer({
 }).single("image");
 
 module.exports = {
-    // create post with image
     createPost: async (req, res) => {
         handleMultipartData(req, res, async (err) => {
             if (err) {
-                return res.status(500).send({ error: err.message });
+                return res.status(500).send({ statusCode: 500, message: err.message });
             }
-            const { content, title } = req.body;
+            const { content } = req.body;
             const user = await User.findById(req.user.id);
             const post = await Post.create({
-                title,
                 content,
                 user: user,
                 image: req.file.filename,
             });
 
-            // cloudinary upload
             const result = await cloudinary.uploader.upload(req.file.path);
             post.image = result.secure_url;
+            // push post to user
             await post.save();
-            return res.send({
-                error: false,
+            return res.status(200).json({
+                statusCode: 200,
                 message: 'Post created',
-                data: [],
                 post: post,
             });
         });
     },
 
-    // show image
+    fetchPosts: async (req, res) => {
+        const { page } = req.params;
+        const posts = await Post.find().populate('user').populate({ path: 'comments', populate: { path: 'user', model: 'User', }, }).sort({ createdAt: -1 }).skip((page - 1) * 10).limit(10);
+
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Posts fetched',
+            posts: posts,
+        });
+    },
+
+    fetchCurrentUserPosts: async (req, res) => {
+        const { page } = req.params;
+        const posts = await Post.find({ user: req.user.id }).populate('user').populate({ path: 'comments', populate: { path: 'user', model: 'User', }, }).sort({ createdAt: -1 }).skip((page - 1) * 10).limit(10);
+
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Profile posts fetched',
+            posts: posts,
+        });
+    },
+
+    likePost: async (req, res) => {
+        const { postId } = req.params;
+        const post = await Post.findById(postId).populate('user').populate({ path: 'comments', populate: { path: 'user', model: 'User', }, });
+        const user = await User.findById(req.user.id);
+
+        if (post.likes.some(like => like._id.equals(user._id))) {
+            post.likes.pull(user._id);
+            await post.save();
+            return res.status(200).send({
+                statusCode: 200,
+                message: 'Post unliked',
+                data: post,
+            });
+        } else {
+            // add like
+            post.likes.push(user._id);
+            await post.save();
+            return res.status(200).send({
+                statusCode: 200,
+                message: 'Post liked',
+                data: post,
+            });
+        }
+    },
+
+    fetchPostLikes: async (req, res) => {
+        const { postId } = req.params;
+        const post = await Post.findById(postId);
+
+        return res.status(200).send({
+            statusCode: 200,
+            message: 'Post likes fetched',
+            post: post,
+        });
+    },
+
+    fetchPostComments: async (req, res) => {
+        const { postId } = req.params;
+        const post = await Post.findById (postId).populate('user').populate({ path: 'comments', populate: { path: 'user', model: 'User', }, });
+
+        return res.status(200).send({
+            statusCode: 200,
+            message: 'Post comments fetched',
+            post: post,
+        });
+    },
+
+    // get posts by user id
+    fetchUserPosts: async (req, res) => {
+
+        const { userId } = req.params;
+        const user = await User.findById (userId);
+        const posts = await Post.find({ user: userId });
+
+        return res.status(200).send({
+            statusCode: 200,
+            message: 'User posts fetched',
+            posts: posts,
+        });
+    },
+
+    /*// show image
     showImage: async (req, res) => {
         const { filename } = req.params;
         return
@@ -108,24 +188,6 @@ module.exports = {
             data: [],
             post: post,
 
-        });
-    },
-
-    getPosts: async (req, res) => {
-        const posts = await Post.find({ user: { $ne: req.user.id } }).populate('user').populate('likes').populate({
-            path: 'comments',
-            populate: {
-                path: 'user',
-                model: 'User',
-            },
-        }).sort({ createdAt: -1 });
-
-        // populate 
-        return res.send({
-            error: false,
-            message: 'Posts',
-            data: posts,
-            post: null,
         });
     },
 
@@ -182,6 +244,6 @@ module.exports = {
             data: post.likes,
             token: ''
         });
-    },
+    },*/
 
 }
