@@ -17,6 +17,7 @@ router.post('/verifyResetPasswordCode/:resetToken', authController.verifyResetPa
 router.put('/resetPassword/:resetToken', authController.resetPassword);
 router.get('/current', authController.getCurrentUser);
 router.get('/getUsers', authController.getAllUsers);
+router.post('/updateProfile', singleImage, authController.getCurrentUser, authController.updateProfile);
 // fetch user posts
 router.get('/user/:userId/posts', postsController.fetchUserPosts);
 

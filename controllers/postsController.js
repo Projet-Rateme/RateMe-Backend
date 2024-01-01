@@ -4,22 +4,34 @@ import { Post } from "../models/post.js";
 
 export default {
     createPost: async (req, res) => {
-            const { content } = req.body;
-            const user = await User.findById(req.user.id);
-            const post = await Post.create({
-                content,
-                user: user,
-                image: `${req.protocol}://${req.get("host")}${process.env.IMGURL}/${req.file.filename}`,
-            });
-
-            // push post to user
-            await post.save();
-            return res.status(200).json({
-                statusCode: 200,
-                message: 'Post created',
-                post: post,
-            });
-    },
+        try {
+          const { content } = req.body;
+          const user = await User.findById(req.user.id);
+          
+          const post = await Post.create({
+            content,
+            user: user,
+            image: `${req.protocol}://${req.get("host")}${process.env.IMGURL}/${req.file.filename}`,
+          });
+          console.log(req.file.filename);
+          console.log(req.file)
+      
+          // push post to user
+          await post.save();
+      
+          return res.status(200).json({
+            statusCode: 200,
+            message: 'Post created',
+            post: post,
+          });
+        } catch (error) {
+          console.error(error);
+          return res.status(500).json({
+            statusCode: 500,
+            message: 'Internal server error',
+          });
+        }
+    },      
 
     fetchPosts: async (req, res) => {
         const { page } = req.params;
@@ -70,7 +82,7 @@ export default {
 
     fetchPostLikes: async (req, res) => {
         const { postId } = req.params;
-        const post = await Post.findById(postId);
+        const post = await Post.findById(postId).populate('user').populate({ path: 'comments', populate: { path: 'user', model: 'User', }, });
 
         return res.status(200).send({
             statusCode: 200,

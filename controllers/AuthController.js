@@ -239,7 +239,6 @@ export default {
         });
     },
 
-    // get all users
     getAllUsers: async (req, res) => {
         const users = await User.find();
         return res.status(200).send({
@@ -247,7 +246,31 @@ export default {
             message : "All users",
             users : users,
         });
-    }
+    },
+
+    updateProfile: async (req, res) => {
+        const { firstname, lastname, bio } = req.body;
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(400).send({ statusCode : 400, message: 'This account doesnt exist' });
+        }
+
+        user.firstname = firstname;
+        user.lastname = lastname;
+        user.bio = bio;
+        user.profilePicture = `${req.protocol}://${req.get("host")}${process.env.IMGURL}/${req.file.filename}`;
+
+        await user.save();
+
+        return res.status(200).send({
+            statusCode : 200,
+            message : "Profile updated",
+            token: req.headers.authorization,
+            user : user,
+        });
+
+    },
 }
 
 
